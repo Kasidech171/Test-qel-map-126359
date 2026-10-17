@@ -1,0 +1,383 @@
+@charset "UTF-8";
+/* =====================================================================
+   QEL Map — style.css
+   
+   สารบัญ
+   1) ตัวแปรสี/ขนาด        2) พื้นฐาน             3) ส่วนหัวและแถบเครื่องมือ
+   4) เลย์เอาต์หลัก         5) แผนที่โลก           6) แผงรายการงาน
+   7) หน้าต่างซ้อนและถาดเปรียบเทียบ                 8) ผู้ดูแล/ไทม์ไลน์ (สำรองไว้)
+   9) ปรับตามขนาดหน้าจอ      10) สั่งพิมพ์
+
+   จุดตัดหน้าจอ (เปลี่ยนได้ที่หมวด 9)
+     ≥ 1180px  เดสก์ท็อป   แผนที่ซ้าย แผงรายการขวา แต่ละฝั่งเลื่อนแยกกัน
+     ≤ 1179px  แท็บเล็ต    แผนที่อยู่บน แผงรายการอยู่ล่าง เลื่อนทั้งหน้า
+     ≤  760px  มือถือ      แถบเครื่องมือเรียงแนวตั้ง แผนที่เลื่อนซ้าย-ขวาได้ หน้าต่างซ้อนเป็นแผ่นเลื่อนขึ้นจากล่าง
+     ระบบสัมผัส (pointer: coarse)  ปุ่มใหญ่ขึ้นให้นิ้วกดง่าย และช่องกรอกไม่ทำให้ iPhone ซูมเอง
+   ===================================================================== */
+
+/* ========== 1) ตัวแปรสี/ขนาด ========== */
+:root{
+  color-scheme:light;
+  --bg:#eef3f9;--bg2:#f7fafd;--card:#fff;--ink:#0d2033;--ink2:#36506b;--mute:#64788f;
+  --line:#dbe4ee;--line2:#edf2f8;--brand:#0f6fb5;--brandink:#fff;
+  --sel:#e08214;--selbg:#fff4e3;
+  --b0:#e9eef4;--b1:#cfe3f4;
+  --am:#8a5200;--amb:#fdeeD4;--danger:#b42318;
+  --sh:0 1px 2px rgba(16,36,60,.06),0 8px 24px rgba(16,36,60,.07);
+  --radius:12px;
+
+  /* ขนาดเลย์เอาต์ */
+  --pl:max(22px,env(safe-area-inset-left,0px));   /* ขอบซ้าย (เผื่อรอยบากจอ) */
+  --pr:max(22px,env(safe-area-inset-right,0px));  /* ขอบขวา */
+  --panel-w:clamp(330px,26vw,400px);              /* ความกว้างแผงรายการฝั่งขวา */
+  --tray-h:70px;                                  /* ความสูงถาดเปรียบเทียบด้านล่าง */
+}
+html[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0b1420;--bg2:#101c2b;--card:#15243a;--ink:#e9f0f8;--ink2:#c2d2e4;--mute:#8fa3bb;
+  --line:#26384f;--line2:#1d2c40;--brand:#55a3e2;--brandink:#07121f;
+  --sel:#f3b63f;--selbg:#3a2c10;
+  --b0:#1b2a3e;--b1:#24456a;
+  --am:#f3c45a;--amb:#3a2d10;--danger:#ff8a80;
+  --sh:0 1px 2px rgba(0,0,0,.3),0 10px 28px rgba(0,0,0,.35);
+}
+
+/* ========== 2) พื้นฐาน ========== */
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%;scroll-padding-top:env(safe-area-inset-top,0px)}
+body{
+  margin:0;background:var(--bg);color:var(--ink);
+  font:400 15px/1.55 "IBM Plex Sans Thai","Noto Sans Thai",system-ui,sans-serif;
+  height:100vh;height:100dvh;display:flex;flex-direction:column;overflow:hidden;
+  padding-top:env(safe-area-inset-top,0px);
+  -webkit-font-smoothing:antialiased;
+  -webkit-tap-highlight-color:rgba(15,111,181,.14);
+}
+h1,h2,h3{margin:0;font-weight:600;letter-spacing:-.01em}
+input,select,textarea,button{font:inherit;font-size:.88rem;color:var(--ink)}
+input,select,textarea{border:1px solid var(--line);background:var(--card);border-radius:8px;padding:7px 10px;max-width:100%}
+textarea{width:100%;resize:vertical}
+button{border:1px solid var(--line);background:var(--card);border-radius:8px;padding:7px 12px;cursor:pointer;touch-action:manipulation;transition:background .15s,border-color .15s,opacity .15s}
+button:hover:not(:disabled){border-color:var(--brand)}
+button:disabled{opacity:.45;cursor:not-allowed}
+:focus-visible{outline:3px solid var(--sel);outline-offset:2px}
+.sub{color:var(--mute);font-size:.82rem}
+.ghost{background:transparent;color:var(--mute)}
+.pri{background:var(--brand);color:var(--brandink);border-color:var(--brand)}
+.pri:hover:not(:disabled){filter:brightness(1.08)}
+
+/* ========== 3) ส่วนหัวและแถบเครื่องมือ ========== */
+.hdr{padding:14px var(--pr) 8px var(--pl);flex-shrink:0;display:flex;gap:14px;align-items:flex-start;flex-wrap:wrap}
+.hdr .mark{width:38px;height:38px;border-radius:10px;background:var(--brand);color:var(--brandink);
+  display:grid;place-items:center;font-weight:700;font-size:.82rem;flex-shrink:0}
+.hdr h1{font-size:1.22rem;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.badge{font-size:.68rem;font-weight:600;background:var(--amb);color:var(--am);border-radius:99px;padding:2px 9px;letter-spacing:.02em}
+.warn{margin:3px 0 0;color:var(--mute);font-size:.8rem;max-width:960px}
+.hdr-title{flex:1 1 0;min-width:0}          /* ชื่อเรื่องกินพื้นที่ที่เหลือ ข้อความยาวจะตัดบรรทัดเอง ไม่ดันปุ่มตกแถว */
+.hdr .spacer{display:none}
+.hdr-act{display:flex;gap:8px;align-items:center}
+
+.bar{display:flex;flex-direction:column;gap:8px;padding:8px var(--pr) 6px var(--pl);flex-shrink:0}
+.bar-row1{display:flex;gap:8px;align-items:center}
+.search{position:relative;flex:1;max-width:460px}
+.search input{width:100%;padding-left:32px}
+.search::before{content:"⌕";position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--mute);font-size:1.05rem;pointer-events:none}
+.bar-extra{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.chk{display:inline-flex;gap:6px;align-items:center;margin:0;color:var(--ink);font-size:.88rem;
+  border:1px solid var(--line);background:var(--card);border-radius:8px;padding:6px 11px;cursor:pointer}
+.chk input{width:auto;margin:0;padding:0}
+.mobile-only{display:none}   /* ปุ่ม "ตัวกรอง" แสดงเฉพาะมือถือ (หมวด 9) */
+.mobile-only.has{background:var(--selbg);border-color:var(--sel);color:var(--am);font-weight:600}   /* มีตัวกรองที่ใช้อยู่ */
+#mfilt[aria-expanded="true"]{border-color:var(--brand)}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:var(--card)}
+.seg button{border:0;border-radius:0;background:transparent;padding:7px 13px}
+.seg button+button{border-left:1px solid var(--line)}
+.seg button.on{background:var(--brand);color:var(--brandink);font-weight:600}
+.fchips{display:flex;gap:6px;flex-wrap:wrap;align-items:center;min-height:0}
+.fchip{display:inline-flex;align-items:center;gap:3px;background:var(--selbg);color:var(--am);
+  border:1px solid transparent;border-radius:99px;padding:3px 4px 3px 11px;font-size:.78rem;font-weight:500}
+.fchip button{border:0;background:transparent;color:inherit;padding:0 6px;font-size:.95rem;line-height:1;cursor:pointer}
+
+/* ========== 4) เลย์เอาต์หลัก (เดสก์ท็อป: สองคอลัมน์) ========== */
+.app{display:grid;grid-template-columns:minmax(0,1fr) var(--panel-w);gap:16px;padding:4px var(--pr) 16px var(--pl);flex:1;min-height:0;align-items:stretch}
+.app>.left{overflow-y:auto;min-height:0;min-width:0;display:flex;flex-direction:column;gap:14px;scrollbar-width:thin}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:16px;overflow-y:auto;height:100%;min-width:0;box-shadow:var(--sh);scrollbar-width:thin}
+.mapw{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:14px;min-width:0;box-shadow:var(--sh)}
+.foot{padding:0 var(--pr) 10px var(--pl);font-size:.76rem;color:var(--mute);flex-shrink:0;display:flex;gap:14px;flex-wrap:wrap}
+body.tray-on .app{padding-bottom:var(--tray-h)}
+html.modal-open,html.modal-open body{overflow:hidden}   /* เปิดหน้าต่างซ้อนอยู่ ห้ามหน้าด้านหลังเลื่อน (JS สลับคลาสนี้) */
+#p,#mapSec{scroll-margin-top:8px}                    /* เลื่อนมาหยุดที่ขอบบนโดยไม่ชิดจอเกินไป */
+
+.focusbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;
+  background:var(--selbg);border:1px solid var(--sel);border-radius:9px;padding:7px 12px;margin-bottom:11px;font-size:.85rem}
+.focusbar b{color:var(--ink)}
+.focusbar .dot{width:9px;height:9px;border-radius:50%;background:var(--sel);flex-shrink:0}
+.focusbar .spacer{flex:1}
+
+/* ========== 5) แผนที่โลก ========== */
+.mapscroll{overflow-x:auto;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch;padding-bottom:4px}
+.geo-wrap{position:relative;border-radius:10px;overflow:hidden;background:linear-gradient(180deg,var(--bg2),var(--card))}
+.world-map{display:block;width:100%;height:auto;aspect-ratio:1000/430}
+
+/* ประเทศ: พื้นฐานเป็นสีเทาอ่อน (ประเทศที่ไม่มีรหัสภูมิภาคตรงกับรายการด้านล่างจะไม่กลายเป็นสีดำ) */
+.country-path,.country-dot{fill:var(--b0);cursor:pointer;stroke:var(--line);stroke-width:.7;vector-effect:non-scaling-stroke;
+  transition:filter .14s,stroke .14s,stroke-width .14s,opacity .14s,fill-opacity .14s}
+.country-path.faded,.country-dot.faded{opacity:.18;filter:saturate(.15)}
+.country-path.selected,.country-dot.selected{stroke:var(--sel);stroke-width:2.2;filter:drop-shadow(0 2px 4px rgba(0,0,0,.18))}
+@media (hover:hover){
+  .country-path:hover,.country-dot:hover{filter:brightness(1.06) saturate(1.08);stroke:var(--brand);stroke-width:1.25}
+}
+.country-group{touch-action:manipulation}
+
+/* สีตามภูมิภาค */
+.region-อาเซียน{fill:rgb(20,160,133);fill-opacity:.25}
+.region-เอเซียตะวันออก{fill:rgb(41,128,185);fill-opacity:.25}
+.region-เอเซียใต้{fill:rgb(108,122,224);fill-opacity:.25}
+.region-ตะวันออกกลาง{fill:rgb(230,126,34);fill-opacity:.25}
+.region-ยุโรปตะวันตก{fill:rgb(155,89,182);fill-opacity:.25}
+.region-ยุโรปตะวันออก{fill:rgb(212,172,13);fill-opacity:.25}
+.region-แอฟริกา{fill:rgb(118,183,64);fill-opacity:.25}
+.region-อเมริกาเหนือ{fill:rgb(0,150,199);fill-opacity:.25}
+.region-อเมริกาใต้{fill:rgb(236,112,159);fill-opacity:.25}
+.region-โอเชียเนีย{fill:rgb(70,120,180);fill-opacity:.25}
+.region-เอเชีย{fill:rgb(41,128,185);fill-opacity:.25}
+.region-ยุโรป,.region-อื่นๆ{fill:var(--b0);fill-opacity:1}   /* ไม่อยู่ใน 10 ภูมิภาคของ QEL */
+/* กรองภูมิภาค: ภูมิภาคที่ไม่ได้เลือกจางลง ภูมิภาคที่เลือกเด่นขึ้น */
+#worldSvg .country-path.region-dim,#worldSvg .country-dot.region-dim{fill-opacity:.07;stroke-opacity:.3;opacity:1;filter:none}
+#worldSvg .country-path.region-pick,#worldSvg .country-dot.region-pick{fill-opacity:.9}
+#worldSvg .country-path.selected,#worldSvg .country-dot.selected{fill-opacity:.9;stroke-opacity:1}
+
+/* ป้ายชื่อประเทศบนแผนที่ (ขนาดตัวอักษรกำหนดจาก JS ตามความยาวชื่อ) */
+.geo-label{pointer-events:none;text-anchor:middle;dominant-baseline:middle}
+.geo-label.faded{opacity:.35}
+.geo-label .geo-name{font:600 8.2px/1.1 "IBM Plex Sans Thai","Noto Sans Thai",Tahoma,Arial,sans-serif;
+  fill:var(--ink);paint-order:stroke;stroke:var(--card);stroke-width:3.4px;stroke-linejoin:round}
+.geo-label .geo-count{font:600 9px/1 "IBM Plex Sans Thai","Noto Sans Thai",Tahoma,Arial,sans-serif;
+  fill:var(--ink2);paint-order:stroke;stroke:var(--card);stroke-width:2.6px;stroke-linejoin:round}
+
+.map-tip{position:absolute;z-index:5;pointer-events:none;max-width:260px;padding:7px 9px;border:1px solid var(--line);background:var(--card);border-radius:9px;box-shadow:var(--sh);font-size:.78rem;line-height:1.35}
+.map-tip b{display:block;font-size:.86rem;margin-bottom:1px}
+
+/* คำอธิบายใต้แผนที่ */
+.lg{display:flex;gap:7px;align-items:center;margin-top:12px;font-size:.77rem;color:var(--mute);flex-wrap:wrap}
+.rchip{display:inline-flex;align-items:center;gap:5px;border:1px solid var(--line);background:var(--card);
+  border-radius:99px;padding:3px 10px;font-size:.76rem;color:var(--ink2)}
+.rchip.on{border-color:var(--sel);background:var(--selbg);color:var(--am);font-weight:600}
+.rchip.dim{opacity:.5}
+.rchip .rdot{width:9px;height:9px;border-radius:50%;flex:none}
+.geo-note{display:flex;gap:7px;align-items:center;flex-wrap:wrap;margin-top:7px;color:var(--mute);font-size:.75rem}
+.geo-note .pin{width:9px;height:9px;border-radius:50%;display:inline-block;background:var(--sel)}
+.note{font-size:.77rem;color:var(--mute);margin:9px 0 0;line-height:1.5}
+
+.data-status{display:flex;align-items:center;gap:8px;margin-bottom:10px;padding:8px 10px;border:1px solid var(--line);background:var(--bg2);border-radius:9px;font-size:.8rem;color:var(--ink2)}
+.data-status.ok{border-color:#72b7a3}
+.data-status.err{border-color:#e3a1a1}
+.data-status .dot{width:9px;height:9px;border-radius:50%;background:var(--mute);flex:0 0 auto}
+.data-status.ok .dot{background:#1a8f67}
+.data-status.err .dot{background:#c63c3c}
+.data-status .spacer{flex:1}
+.data-status code{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:.72rem}
+
+/* ========== 6) แผงรายการงาน ========== */
+.ph{display:flex;align-items:flex-start;gap:10px;margin-bottom:4px}
+.ph h2{font-size:1.14rem}
+.ph .spacer{flex:1}
+.sh{font-size:.8rem;color:var(--mute);font-weight:600;margin:18px 0 8px;letter-spacing:.02em}
+.kpi{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+.kpi div{background:var(--bg2);border:1px solid var(--line2);border-radius:10px;padding:10px 12px}
+.kpi b{display:block;font-size:1.5rem;line-height:1.15;font-weight:600}
+.kpi span{font-size:.76rem;color:var(--mute)}
+.top{display:flex;flex-direction:column;gap:5px}
+.top button{display:flex;justify-content:space-between;align-items:center;gap:8px;width:100%;text-align:left;padding:8px 11px}
+.top button b{color:var(--brand)}
+.bars{display:flex;flex-direction:column;gap:3px}
+.barrow{display:grid;grid-template-columns:minmax(0,1fr) 84px 30px;align-items:center;gap:9px;width:100%;
+  border:0;background:transparent;padding:5px 6px;border-radius:7px;text-align:left;font-size:.82rem}
+.barrow:hover{background:var(--bg2)}
+.barrow .bt{height:7px;background:var(--line2);border-radius:99px;overflow:hidden}
+.barrow .bf{display:block;height:100%;background:var(--brand);border-radius:99px}
+.barrow b{text-align:right;font-weight:600;color:var(--ink2)}
+.barrow .bl{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+ul.fl{list-style:none;margin:12px 0 0;padding:0}
+.fi{border-top:1px solid var(--line2);transition:opacity .2s ease,filter .2s ease}
+.fl.focusing .fi{opacity:.34;filter:saturate(.3)}
+.fl.focusing .fi.open{opacity:1;filter:none}
+.fi-row{display:flex;gap:4px;align-items:flex-start;padding:9px 0}
+.bm{border:0;background:transparent;font-size:1.05rem;line-height:1.4;padding:0 7px 0 0;color:var(--mute);flex-shrink:0}
+.bm.on{color:var(--sel)}
+.fi-head{flex:1;min-width:0;border:0;background:transparent;text-align:left;padding:0;border-radius:7px}
+.fi-head:hover .fn{color:var(--brand)}
+.fn{font-weight:600;font-size:.92rem;display:block;line-height:1.4;overflow-wrap:anywhere}
+.meta{font-size:.76rem;color:var(--mute);display:flex;gap:6px;flex-wrap:wrap;margin-top:4px;align-items:center}
+.tg{background:var(--b1);color:var(--ink);border-radius:99px;padding:1px 9px}
+.am{background:var(--amb);color:var(--am);border-radius:99px;padding:1px 9px;font-weight:600;cursor:help}
+.fi.open{background:var(--bg2);border-radius:10px;padding:0 10px;margin:4px -10px;border-top-color:transparent}
+.fi-body{padding:2px 0 12px;font-size:.84rem;border-top:1px dashed var(--line);margin-top:2px}
+.dl{display:grid;grid-template-columns:76px minmax(0,1fr);gap:5px 10px;margin:10px 0 0}
+.dl dt{color:var(--mute);font-size:.78rem}
+.dl dd{margin:0;overflow-wrap:anywhere}
+.fi-act{display:flex;gap:6px;flex-wrap:wrap;margin-top:12px}
+.fi-act button,.fi-act a{font-size:.78rem;padding:5px 10px;border-radius:7px;border:1px solid var(--line);
+  background:var(--card);text-decoration:none;color:var(--ink);cursor:pointer}
+.empty{text-align:center;color:var(--mute);font-size:.85rem;padding:26px 10px}
+
+/* ========== 7) หน้าต่างซ้อนและถาดเปรียบเทียบ ========== */
+.ov{position:fixed;inset:0;background:rgba(8,16,26,.6);backdrop-filter:blur(3px);
+  display:flex;align-items:center;justify-content:center;z-index:60;padding:16px}
+.ov-card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:22px;
+  max-width:600px;width:100%;max-height:86vh;max-height:min(86vh,calc(100dvh - 32px));overflow:auto;overscroll-behavior:contain;
+  position:relative;box-shadow:0 20px 50px rgba(0,0,0,.3)}
+.ov-card h2{font-size:1.16rem;margin-bottom:5px;padding-right:36px}
+.ov-card>p{margin:0 0 14px;color:var(--mute);font-size:.88rem}
+.ov-card .x{position:absolute;top:12px;right:12px;border:0;background:transparent;font-size:1.5rem;line-height:1;padding:2px 9px}
+.onb-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(168px,1fr));gap:8px;margin-bottom:14px}
+.onb-grid button{text-align:left;padding:11px 13px;white-space:normal;line-height:1.35;font-size:.85rem}
+.onb-grid button:hover{background:var(--selbg);border-color:var(--sel)}
+
+.tray{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--line);
+  box-shadow:0 -4px 18px rgba(0,0,0,.14);z-index:30;
+  padding:10px max(20px,env(safe-area-inset-right,0px)) calc(10px + env(safe-area-inset-bottom,0px)) max(20px,env(safe-area-inset-left,0px))}
+.tray-inner{display:flex;flex-wrap:wrap;gap:8px;align-items:center;max-width:1400px;margin:0 auto}
+.tray .spacer{flex:1}
+.chip{display:inline-flex;align-items:center;gap:3px;background:var(--bg2);border:1px solid var(--line2);
+  border-radius:99px;padding:3px 4px 3px 11px;font-size:.77rem}
+.chip button{border:0;background:transparent;padding:0 6px;color:var(--mute);font-size:.9rem;line-height:1}
+.cmpwrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.cmptbl{width:100%;border-collapse:collapse;font-size:.83rem;min-width:420px}
+.cmptbl th,.cmptbl td{border-top:1px solid var(--line);padding:9px 8px;text-align:left;vertical-align:top}
+.cmptbl td{min-width:150px}
+.cmptbl th{color:var(--mute);font-weight:600;white-space:nowrap;width:98px;position:sticky;left:0;z-index:1;background:var(--card)}
+.cmptbl tr:first-child td{font-weight:600}
+
+/* ========== 8) โหมดผู้ดูแลและไทม์ไลน์ (ตอนนี้ยังไม่ได้ใช้ในหน้า เก็บไว้เผื่อเปิดกลับมา) ========== */
+.on-admin{background:var(--sel);border-color:var(--sel);color:#2a1b00;font-weight:600}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+label{display:block;font-size:.77rem;color:var(--mute)}
+label input,label select{width:100%;margin:3px 0 8px}
+.del{color:var(--danger);border-color:transparent;background:transparent;padding:4px 0;font-size:.8rem}
+.adm-li{border-top:1px solid var(--line);padding:12px 0}
+.tlcol{margin-bottom:20px}
+.tlcol h3{font-size:.95rem;margin:0 0 8px;display:flex;gap:8px;align-items:baseline}
+.tlcol ul{list-style:none;margin:0;padding:0}
+.tlcol li{padding:8px 0;border-top:1px solid var(--line2)}
+.tlcol li b{font-size:.88rem}
+
+/* =====================================================================
+   9) ปรับตามขนาดหน้าจอ
+   ===================================================================== */
+
+/* ---- แท็บเล็ตและจอเล็ก (≤ 1179px): ซ้อนแนวตั้ง เลื่อนทั้งหน้า ---- */
+@media (max-width:1179px){
+  body{height:auto;min-height:100vh;min-height:100dvh;overflow:visible}
+  .app{grid-template-columns:minmax(0,1fr);flex:none;align-items:start;padding-bottom:20px}
+  .app>.left{overflow:visible}
+  .panel{height:auto;overflow:visible}
+  body.tray-on .app{padding-bottom:20px}
+  body.tray-on .foot{padding-bottom:calc(var(--tray-h) + 10px)}
+}
+
+/* ---- แท็บเล็ตแนวตั้ง (600–1179px): รายการประเทศเรียงสองคอลัมน์ให้ไม่ยาวเกินไป ---- */
+@media (min-width:600px) and (max-width:1179px){
+  .top{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+
+/* ---- มือถือ (≤ 760px) ---- */
+@media (max-width:760px){
+  :root{--pl:max(12px,env(safe-area-inset-left,0px));--pr:max(12px,env(safe-area-inset-right,0px));--tray-h:112px}
+
+  /* ส่วนหัว: โลโก้ซ้าย ปุ่มขวา ชื่อเต็มความกว้างอยู่แถวถัดไป */
+  .hdr{padding-top:12px;padding-bottom:4px;gap:8px 10px;align-items:center}
+  .hdr .mark{order:1;width:34px;height:34px}
+  .hdr-act{order:2;margin-left:auto}
+  .hdr-title{order:3;flex:1 1 100%}
+  .hdr h1{font-size:1.06rem}
+  .warn{font-size:.74rem;line-height:1.45}
+
+  /* แถบค้นหาและตัวกรอง: ตัวกรองพับเก็บไว้ กดปุ่ม "ตัวกรอง" เพื่อเปิด (JS สลับคลาส .open) */
+  .search{max-width:none}
+  .mobile-only{display:inline-flex;align-items:center;white-space:nowrap}
+  .bar-extra{display:none}
+  .bar-extra.open{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px}
+  .bar-extra select{width:100%}
+  #fg{grid-column:1/-1}
+
+  /* แผนที่: กว้างกว่าจอเล็กน้อย เลื่อนซ้าย-ขวาได้ เพื่อให้ชื่อประเทศยังอ่านออก */
+  .mapw{padding:10px}
+  .mapw::before{content:"↔ เลื่อนแผนที่ซ้าย–ขวาได้ · แตะประเทศเพื่อดูรายการงาน";display:block;margin:0 0 8px;font-size:.72rem;color:var(--mute)}
+  .geo-wrap{min-width:760px}
+  .lg{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;margin-right:-10px;padding-right:10px}
+  .lg::-webkit-scrollbar{display:none}
+  .rchip{flex:none}
+
+  .panel{padding:14px}
+  .fi.open{margin:4px -8px;padding:0 8px}
+
+  /* หน้าต่างซ้อน: เลื่อนขึ้นมาจากขอบล่างเหมือนแผ่นของแอป */
+  .ov{align-items:flex-end;padding:0}
+  .ov-card{max-width:none!important;max-height:92vh;max-height:92dvh;border-radius:18px 18px 0 0;
+    padding:18px 16px calc(18px + env(safe-area-inset-bottom,0px))}
+  .onb-grid{grid-template-columns:1fr 1fr}
+
+  /* ถาดเปรียบเทียบ: แถวบนเป็นจำนวน+ปุ่ม แถวล่างเป็นชื่องานที่เลื่อนซ้าย-ขวาได้ */
+  .tray{padding:8px max(12px,env(safe-area-inset-right,0px)) calc(8px + env(safe-area-inset-bottom,0px)) max(12px,env(safe-area-inset-left,0px))}
+  .tray-inner{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:6px 8px}
+  .tray .spacer{display:none}
+  #trayCount{grid-column:1;grid-row:1}
+  #trayCompare{grid-column:2;grid-row:1}
+  #trayClear{grid-column:3;grid-row:1}
+  #trayChips{grid-column:1/-1;grid-row:2;flex-wrap:nowrap!important;overflow-x:auto;scrollbar-width:none}
+  #trayChips::-webkit-scrollbar{display:none}
+  .chip{flex:none}
+  body.tray-on .foot{padding-bottom:calc(var(--tray-h) + env(safe-area-inset-bottom,0px) + 10px)}
+}
+
+/* ---- มือถือจอแคบมาก (≤ 380px) ---- */
+@media (max-width:380px){
+  .hdr h1{font-size:1rem}
+  .bar-extra.open{grid-template-columns:minmax(0,1fr)}
+  .kpi b{font-size:1.3rem}
+  .barrow{grid-template-columns:minmax(0,1fr) 56px 28px}
+  .onb-grid{grid-template-columns:1fr}
+  .dl{grid-template-columns:68px minmax(0,1fr)}
+}
+
+/* ---- หน้าจอสัมผัส (นิ้ว): ปุ่มใหญ่ขึ้น และกัน iPhone ซูมเองเวลาแตะช่องกรอก ---- */
+@media (pointer:coarse){
+  button:active:not(:disabled){background:var(--bg2)}      /* ให้เห็นว่านิ้วกดโดนแล้ว */
+  .pri:active:not(:disabled){background:var(--brand);filter:brightness(.92)}
+  input,select,textarea{font-size:16px}
+  button,select,input[type="search"],.chk{min-height:44px}
+  .seg button{min-height:44px}
+  .rchip{min-height:40px;padding:4px 13px;font-size:.8rem}
+  .fchip{min-height:34px}
+  .fchip button,.chip button{min-width:34px;min-height:34px;font-size:1.1rem}
+  .bm{min-width:44px;min-height:44px;margin:-6px 0 -6px -8px;padding:0;display:grid;place-items:center;font-size:1.3rem}
+  .fi-head{min-height:44px;padding:4px 0}
+  .top button{min-height:46px}
+  .barrow{min-height:44px}
+  .focusbar button{min-height:40px}
+  .ov-card .x{min-width:44px;min-height:44px;top:6px;right:6px;font-size:1.8rem}
+  .ph .ghost{min-width:44px}
+}
+
+/* ---- จอกว้างมาก (≥ 1700px): ให้ป้ายและข้อความอ่านสบายขึ้นเล็กน้อย ---- */
+@media (min-width:1700px){
+  .warn{max-width:1100px}
+  .geo-label .geo-count{font-size:9.5px}
+}
+
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important;scroll-behavior:auto!important}}
+
+/* ========== 10) สั่งพิมพ์ ========== */
+@media print{
+  .bar,.tray,.hdr-act,.focusbar button,.fi-act{display:none!important}
+  body{height:auto;overflow:visible;background:#fff}
+  .app{display:block;padding:0}
+  .panel,.mapw{box-shadow:none;break-inside:avoid}
+  .mapw::before{display:none}
+  .mapscroll{overflow:visible}
+  .geo-wrap{min-width:0}
+  .world-map .country-path.faded{opacity:1;filter:none}
+}
